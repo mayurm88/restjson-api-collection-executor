@@ -3,7 +3,7 @@ package body
 import (
 	"encoding/json"
 
-	"endpoint-collector/rest/supplier"
+	"github.com/mayurm88/restjson-api-collection-executor/supplier"
 )
 
 type RequestBody struct {

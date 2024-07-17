@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"endpoint-collector/rest/supplier"
+	"github.com/mayurm88/restjson-api-collection-executor/supplier"
 )
 
 type Collection struct {

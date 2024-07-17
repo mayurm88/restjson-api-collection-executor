@@ -3,7 +3,7 @@ package collection
 import (
 	"net/http"
 
-	"endpoint-collector/rest/supplier"
+	"github.com/mayurm88/restjson-api-collection-executor/supplier"
 )
 
 func GetRestCreateEndpointWithURL(url string) *EndpointData {

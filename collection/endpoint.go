@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"endpoint-collector/rest/body"
-	"endpoint-collector/rest/supplier"
+	"github.com/mayurm88/restjson-api-collection-executor/body"
+	"github.com/mayurm88/restjson-api-collection-executor/supplier"
 )
 
 type EndpointData struct {
