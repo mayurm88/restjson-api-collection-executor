@@ -68,6 +68,8 @@ func (c *Collection) Execute() (*Result, error) {
 		Timeout:   time.Second * 10,
 	}
 
+	result := NewResult()
+
 	for _, e := range c.Endpoints {
 		url, err := c.constructURL(e)
 		if err != nil {
@@ -104,24 +106,29 @@ func (c *Collection) Execute() (*Result, error) {
 			return nil, err
 		}
 
+		defer resp.Body.Close()
+
 		log.Printf("response for endpoint %s and Method %s received status %s\n", url, e.Method, resp.Status)
 		if !bodyProcessMethods[e.Method] {
-			statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
-			if !statusOK {
-				return nil, fmt.Errorf("request failed with status %d", resp.StatusCode)
+			err = addResponseToResult(resp, &result, e)
+			if err != nil {
+				return nil, err
 			}
 			continue
 		}
 
-		defer resp.Body.Close()
 		statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
 		if !statusOK {
-			respBodyBytes, err := io.ReadAll(resp.Body)
+			err = addResponseToResult(resp, &result, e)
 			if err != nil {
-				log.Fatal(err)
+				return nil, err
 			}
-			log.Printf("Error response from server, %s", string(respBodyBytes))
 			continue
+		}
+
+		err = addResponseToResult(resp, &result, e)
+		if err != nil {
+			return nil, err
 		}
 
 		respBodyBytes, err := io.ReadAll(resp.Body)
@@ -140,11 +147,40 @@ func (c *Collection) Execute() (*Result, error) {
 		if err != nil {
 			return nil, err
 		}
-		bodyString := string(respBodyBytes)
-		log.Println(bodyString)
 	}
 
-	return nil, nil
+	return &result, nil
+}
+
+func addResponseToResult(resp *http.Response, result *Result, endpoint *EndpointData) error {
+	headers := resp.Header
+	var resultHeaders map[string]string
+	for k, _ := range headers {
+		value := headers.Get(k)
+		resultHeaders[k] = value
+	}
+	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !statusOK {
+		log.Printf("request failed with status %d", resp.StatusCode)
+		result.resultByEndpoint[endpoint] = EndpointResult{
+			ResponseHeaders: resultHeaders,
+			Status:          resp.StatusCode,
+		}
+		return nil
+	}
+
+	respBodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	result.resultByEndpoint[endpoint] = EndpointResult{
+		ResponseHeaders: resultHeaders,
+		Status:          resp.StatusCode,
+		ResponseBody:    respBodyBytes,
+	}
+	return nil
 }
 
 func (c *Collection) constructURL(e *EndpointData) (string, error) {

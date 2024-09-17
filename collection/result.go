@@ -9,3 +9,9 @@ type EndpointResult struct {
 type Result struct {
 	resultByEndpoint map[*EndpointData]EndpointResult
 }
+
+func NewResult() Result {
+	return Result{
+		resultByEndpoint: map[*EndpointData]EndpointResult{},
+	}
+}
